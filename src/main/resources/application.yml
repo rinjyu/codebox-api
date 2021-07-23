@@ -2,18 +2,22 @@ server:
   port: ${port.codebox-api}
 
 spring:
+  application:
+    name: codebox-api
   profiles:
     active: local
-  boot:
-    admin:
-      client:
-        url: http://codebox-boot-admin
-        instance:
-          name: Codebox Api Service :${spring.application.name}
-          service-base-url: http://codebox-boot-admin:${server.port}
-        username: admin
-        password: test
-        enabled: true
+  config:
+    import: "optional:configserver:http://codebox-cloud-config"
+    boot:
+      admin:
+        client:
+          url: http://codebox-boot-admin
+          instance:
+            name: CodeBox API Service :${spring.application.name}
+            service-base-url: http://codebox-boot-admin:${server.port}
+          username: admin
+          password: test
+          enabled: true
   banner:
     location: classpath:/banner/banner.txt
 
@@ -23,27 +27,31 @@ management:
       exposure:
         include: '*'
 
+api:
+  version:
+    v1: v1
+
 ---
 spring:
-  profiles: local
+  config:
+    activate:
+      on-profile: local
+    import: "optional:configserver:http://127.0.0.1:8500"
   boot:
     admin:
       client:
         url: http://127.0.0.1:${port.codebox-boot-admin}
         instance:
-          name: Codebox Api Service :${spring.application.name}
+          name: CodeBox API Service :${spring.application.name}
           service-base-url: http://127.0.0.1:${server.port}
-          username: admin
-          password: test
-          enabled: true
+        username: admin
+        password: test
+        enabled: true
   datasource:
     url: jdbc:h2:mem:testdb
     driver-class-name: org.h2.Driver
     username: sa
     password:
-    initialization-mode: always
-    schema: classpath:data/schema.sql
-    data: classpath:data/data.sql
   h2:
     console:
       enabled: true
@@ -51,18 +59,26 @@ spring:
       settings:
         trace: true
         web-allow-others: true
-
-
----
-spring:
-  profiles: dev
-
-
----
-spring:
-  profiles: stag
-
+  sql:
+    init:
+      mode: always
+      data-locations: classpath:data/data.sql
+      schema-locations: classpath:data/schema.sql
 
 ---
 spring:
-  profiles: prod
+  config:
+    activate:
+      on-profile: dev
+
+---
+spring:
+  config:
+    activate:
+      on-profile: stag
+
+---
+spring:
+  config:
+    activate:
+      on-profile: prod
